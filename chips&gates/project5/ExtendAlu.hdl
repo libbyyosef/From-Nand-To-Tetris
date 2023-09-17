@@ -1,0 +1,56 @@
+// This file is part of nand2tetris, as taught in The Hebrew University,
+// and was written by Aviv Yaish, and is published under the Creative 
+// Common Attribution-NonCommercial-ShareAlike 3.0 Unported License 
+// https://creativecommons.org/licenses/by-nc-sa/3.0/
+
+// The inputs of the extended ALU are instruction[9], x[16], y[16].
+// The "ng" and "zr" output pins behave the same as in the regular ALU.
+// The "out" output is defined as follows:
+// If instruction[8]=1 and instruction[7]=1 the output is identical to the 
+// regular ALU, where:
+// instruction[5]=zx, instruction[4]=nx, ..., instruction[0]=no
+// Else, if instruction[8]=0 and instruction[7]=1 the output is a shift:
+// - If instruction[4] == 0, the input "y" will be shifted, otherwise "x", .
+// - If instruction[5] == 0, the shift will be a right-shift, otherwise left.
+// - All other inputs are undefined.
+
+CHIP ExtendAlu {
+     IN x[16], y[16], instruction[9];
+     OUT out[16], zr, ng;
+     
+     PARTS:
+     // Put you code here:
+     ALU(x=x ,y=y ,zx=instruction[5] ,nx=instruction[4] ,zy=instruction[3] ,ny=instruction[2] ,f=instruction[1] ,no=instruction[0] ,out=outRegularAlu ,zr=zr1 ,ng=ng1 );
+
+
+
+
+
+    
+
+
+     Mux16(a=y, b=x, sel=instruction[4], out=whattoshift);
+     ShiftRight(in=whattoshift, out=shiftright);
+     ShiftLeft(in=whattoshift, out=shiftleft);
+     Mux16(a=shiftright, b=shiftleft, sel=instruction[5], out=outaftershift);
+
+     Mux16(a=outaftershift ,b=outRegularAlu ,sel=instruction[8], out=out8);
+     Mux16(a=false, b=out8,sel=instruction[7], out=out1, out[15]=ng2 );
+     Not16(in=out1,out=Notout1);
+     Mux16(a=out1,b=Notout1,sel=instruction[0],out[0..7]=nout1,out[8..15]=nout2, out=out2);
+     Or8Way(in=nout1,out=nor1);
+     Or8Way(in=nout2,out=nor2);
+     Or(a=nor1,b=nor2,out=outNotZero);
+     Not(in=outNotZero,out=zr2); 
+
+     Mux16(a=out1, b=out2, sel=false, out=out);
+
+     And(a=instruction[7], b=instruction[8], out=choosezrng);
+     Mux(a=zr2, b=zr1, sel=choosezrng, out=zr);
+     Mux(a=ng2, b=ng1, sel=choosezrng, out=ng);
+
+
+
+
+
+}

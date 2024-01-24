@@ -1,0 +1,233 @@
+// This file is part of nand2tetris, as taught in The Hebrew University, and
+// was written by Aviv Yaish. It is an extension to the specifications given
+// [here](https://www.nand2tetris.org) (Shimon Schocken and Noam Nisan, 2017),
+// as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
+// Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
+
+/**
+ * A library of commonly used mathematical functions.
+ * Note: Jack compilers implement multiplication and division using OS method calls.
+ */
+class Math {
+        /** Initializes the library. */
+        static Array two2the;
+        static int remain;
+        function void init() {
+            let two2the = Array.new(16);
+            let two2the[0] = 1;
+            let two2the[1] = 2;
+            let two2the[2] = 4;
+            let two2the[3] = 8;
+            let two2the[4] = 16;
+            let two2the[5] = 32;
+            let two2the[6] = 64;
+            let two2the[7] = 128;
+            let two2the[8] = 256;
+            let two2the[9] = 512;
+            let two2the[10] = 1024;
+            let two2the[11] = 2048;
+            let two2the[12] = 4096;
+            let two2the[13] = 8192;
+            let two2the[14] = 16384;
+            let two2the[15] = 16384+16384;
+            return;
+        }
+
+        /** Returns the absolute value of x. */
+        function int abs(int x) {
+            if ((x>0) | (x=0))
+            {
+                return x;
+            }
+            else
+            {
+                return -x;
+            }
+        }
+
+        /** 
+         * Returns the product of x and y. 
+         * When a Jack compiler detects the multiplication operator '*' in the 
+         * program's code, it handles it by invoking this method. In other words,
+         * the Jack expressions x*y and multiply(x,y) return the same value.
+         */
+        function int multiply(int x, int y) {
+            // Pseudocode:
+            // 1. let sum = 0
+            // 2. let shiftedx = x
+            // 3. for i = 0 ... n-1 do
+            // 4.   if ((i-th bit of y) == 1)
+            // 5.      let sum = sum + shiftedx
+            // 6.   let shiftedx = 2*shiftedx
+            // 7. return sum
+            var int sum, i, shiftedX;
+            let i = 0;
+            let sum = 0;
+            let shiftedX = x;
+            while (i < 16)
+            {
+                if (Math.ithBit(y, i) = 1)
+                {
+                    let sum = sum + shiftedX;
+                }
+                let shiftedX = shiftedX + shiftedX;
+                let i = i + 1;
+            }
+            return sum;
+
+        }
+
+        /** 
+         * Returns the integer part of x/y.
+         * When a Jack compiler detects the multiplication operator '/' in the 
+         * program's code, it handles it by invoking this method. In other words,
+         * the Jack expressions x/y and divide(x,y) return the same value.
+         */
+        function int divide(int x, int y) {
+            // This should be implemented without using multiplication.
+            // Hint: updating the value of 2*q*y in the "if" statement requires
+            // at most a single addition operator at every recursion step.
+            // Pseudocode:
+            // 1. if (y > x) return 0
+            // 2. let q = divide(x, 2*y)
+            // 3. if ((x - 2*q*y) < y)
+            // 4.   return 2*q
+            // 5. else
+            // 6.   return 2*q + 1
+            var int q, nx, ny, fx, fy;
+            let nx = 0;
+            let ny = 0;
+            let fx = x;
+            let fy = y;
+            let remain = 0;
+            if (x < 0)
+            {
+                let nx = 1;
+                let fx = -x;
+            }
+            if (y < 0)
+            {
+                let ny = 1;
+                let fy = -y;
+            }
+            if (fy > fx)
+            {
+                return 0;
+            }
+            if(~(nx = ny))
+            {
+                return -Math.divideHelper(fx , fy);
+            }
+            return Math.divideHelper(fx , fy);
+
+        }
+
+        function int divideHelper(int x, int y)
+        {
+            var int q;
+            if ((y < 0) | (y > x))
+            {
+                return 0;
+            }
+            let q = Math.divideHelper(x, y+y);
+            if (y > (x-remain))
+            {
+                return q+q;
+            }
+            else
+            {
+                let remain = y + remain;
+                return q+q+1;
+            }
+        }
+
+        /** Returns the integer part of the square root of x. */
+        function int sqrt(int x) {
+            // This should be implemented without using multiplication or division.
+            // Pseudocode (where '**' is the mathematical power function):
+            // 1. let y = 0
+            // 2. for j = (n/2 - 1) ... 0 do
+            // 3.   if ((y + 2**j)**2 <= x) then let y = y + 2**j
+            // 4. return y
+            var int i, temp, ret;
+            let i = 7;
+            let ret = 0;
+            while (i > (-1))
+            {
+                let temp = (two2the[i] + ret) * (two2the[i] + ret);
+                if ((temp > 0) & (~(temp > x)))
+                {
+                    let ret = two2the[i] + ret;
+                }
+                let i = i-1;
+            }
+            return ret;
+
+        }
+
+        /** Returns the greater number. */
+        function int max(int a, int b) {
+            if (a>b)
+            {
+                return a;
+            }
+            else
+            {
+                return b;
+            }
+        }
+
+        /** Returns the smaller number. */
+        function int min(int a, int b) {
+            if (a<b)
+            {
+                return a;
+            }
+            else
+            {
+                return b;
+            }
+        }
+
+        function Array int2bin(int x)
+        {
+            var Array bin;
+            var int sum, i;
+            let sum = x;
+            let i=15;
+            let bin = Array.new(16);
+            while (i>-1)
+            {
+                if (~(two2the[i]>sum))
+                {
+                    let sum = sum - two2the[i];
+                    let bin[i] = 1;
+                }
+                else
+                {
+                    let bin[i] = 0;
+                }
+                let i = i-1;
+            }
+            let i = 0;
+            while(i < 16)
+            {
+                do Output.printInt(bin[i]);
+                let i = i+1;
+            }
+            do Output.println();
+            return bin;
+        }
+
+        function int ithBit(int x, int i)
+        {
+            if ((two2the[i] & x) = 0)
+            {
+                return 0;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+}
